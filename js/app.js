@@ -17,6 +17,7 @@
     var COLLIDE_POINTS = -5;
 
 // Enemies our player must avoid
+// This class includes update() and render() methods.
 var Enemy = function() {
     // Variables applied to each of our instances go here,
     // we've provided one for you to get started
@@ -65,21 +66,28 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
+// Our player
+// This class includes update(), render(), and
+// handleInput() methods.
 var Player = function() {
 
     // The image/sprite for our enemies, this uses
     // a helper we've provided to easily load images
     this.sprite = 'images/char-boy.png';
+    // The X coordinate for our player
     this.x = PLAYER_START_X;
+    // The Y coordinate for our player
     this.y = PLAYER_START_Y;
+    // The speed at which our player moves
     this.speed = PLAYER_SPEED;
+    // The direction of our player's next move
     this.move = 'stay';
+    // Our player's score
     this.score = 0;
 };
 
+// Updates the position of our player on the screen
+// based on the last keyboard input received
 Player.prototype.update = function() {
     switch (this.move) {
     case 'left':
@@ -114,6 +122,8 @@ Player.prototype.update = function() {
 };
 
 // Returns the player to the starting square if it collides with an enemy
+// Define a collision as the moment when center of two objects in the same
+// square on the game board cross
 Player.prototype.resolveCollisions = function() {
     var collisionDetected = false;
     var rowPlayer = Math.floor(this.y / ROW_HEIGHT);
@@ -142,7 +152,7 @@ Player.prototype.handleInput = function(keyCode) {
     this.move = keyCode;
 };
 
-// Draw the player on the screen, required method for game
+// Draw the player on the screen and update the score
 Player.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
     document.getElementById("score").innerHTML = "Score = " + this.score;
