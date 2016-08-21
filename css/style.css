@@ -2,7 +2,7 @@ body {
     text-align: center;
 }
 
-div {
+div.scoreBox {
     font-family: Arial;
     font-size: 16px;
     font-weight: bold;

@@ -7,7 +7,7 @@
     var RIGHT_BOUNDARY = 501;
     var TOP_BOUNDARY = 0;
     var BOTTOM_BOUNDARY = 450;
-    var SPEED_MULTIPLIER = 150;
+    var SPEED_MULTIPLIER = 170;
     var PLAYER_START_X = 200;
     var PLAYER_START_Y = 400;
     var PLAYER_SPEED = 100;
@@ -15,21 +15,6 @@
     var MOVES = ['up', 'down', 'left', 'right'];
     var WIN_POINTS = 10;
     var COLLIDE_POINTS = -5;
-
-// Utility functions
-
-// Assign the speed of this enemy
-var setSpeed = function () {
-    var speed = SPEED_MULTIPLIER*(1+Math.random());
-    return (speed);
-};
-
-// Randomly assign the row for this enemy to travel on
-var setYPos = function () {
-    var row = 1 + Math.floor(Math.random() * STONE_ROWS);
-    var yPos = STONE_TOP + ROW_HEIGHT * (row - 1);
-    return (yPos);
-};
 
 // Enemies our player must avoid
 var Enemy = function() {
@@ -42,22 +27,36 @@ var Enemy = function() {
     // Start on the far left
     this.x = LEFT_BOUNDARY;
     // Choose the row the enemy will travel on
-    this.y = setYPos();
+    this.setYPos();
     // Assign a speed
-    this.speed = setSpeed();
+    this.setSpeed();
+};
+
+// Randomly assign a speed to this enemy
+Enemy.prototype.setSpeed = function () {
+    this.speed = SPEED_MULTIPLIER*(1+Math.random());
+};
+
+// Randomly assign the row for this enemy to travel on
+// and calculate the y position
+Enemy.prototype.setYPos = function () {
+    var row = 1 + Math.floor(Math.random() * STONE_ROWS);
+    this.y = STONE_TOP + ROW_HEIGHT * (row - 1);
 };
 
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
 Enemy.prototype.update = function(dt) {
-    // You should multiply any movement by the dt parameter
-    // which will ensure the game runs at the same speed for
+    // Multiply any movement by the dt parameter
+    // This will ensure the game runs at the same speed for
     // all computers.
+    // If this enemy reaches the right boundary of the game
+    // canvas, reset its position and speed
     this.x = this.x + dt*this.speed;
     if (this.x > RIGHT_BOUNDARY) {
         this.x = LEFT_BOUNDARY;
-        this.speed = setSpeed();
-        this.y = setYPos();
+        this.setSpeed();
+        this.setYPos();
     }
 };
 
@@ -82,40 +81,6 @@ var Player = function() {
 };
 
 Player.prototype.update = function() {
-
-    // Determines whether two things occupy the same square on the game board
-    var onSameSquare = function(thing1,thing2) {
-        var same = false;
-        var row1 = Math.floor(thing1.y / ROW_HEIGHT);
-        var row2 = Math.floor(thing2.y / ROW_HEIGHT);
-        var midline1 = Math.floor(thing1.x + COLUMN_WIDTH/2);
-        var midline2 = Math.floor(thing2.x + COLUMN_WIDTH/2);
-
-        if (row1 == row2) {
-            if (Math.abs(midline1 - midline2) < ALLOWED_OVERLAP) {
-                same = true;
-            }
-        }
-        return ( same );
-    };
-
-    // Returns the player to the starting square
-    var toStartSquare = function(player) {
-        player.x = PLAYER_START_X;
-        player.y = PLAYER_START_Y;
-    };
-
-    // Returns the player to the starting square if it collides with an enemy
-    var resolveCollisions = function(player) {
-        allEnemies.forEach( function(enemy) {
-            if (onSameSquare(player, enemy)) {
-                toStartSquare(player);
-                player.score = player.score + COLLIDE_POINTS;
-                console.log("Collision detected...score is now " + player.score);
-            }
-        } );
-    };
-
     switch (this.move) {
     case 'left':
         if ((this.x - COLUMN_WIDTH) > LEFT_BOUNDARY)  {
@@ -131,9 +96,10 @@ Player.prototype.update = function() {
         if ((this.y - ROW_HEIGHT) > TOP_BOUNDARY) {
             this.y = this.y - ROW_HEIGHT;
         } else {
-            toStartSquare(player);
             this.score = this.score + WIN_POINTS;
             console.log("Player reached water...score is now " + this.score);
+            this.x = PLAYER_START_X;
+            this.y = PLAYER_START_Y;
         }
         break;
     case 'down':
@@ -144,10 +110,31 @@ Player.prototype.update = function() {
     }
     this.move = 'stay';
     // Resolve collisions with enemies
-    resolveCollisions(this);
+    this.resolveCollisions();
 };
 
+// Returns the player to the starting square if it collides with an enemy
+Player.prototype.resolveCollisions = function() {
+    var collisionDetected = false;
+    var rowPlayer = Math.floor(this.y / ROW_HEIGHT);
+    var midlinePlayer = Math.floor(this.x + COLUMN_WIDTH/2);
 
+        allEnemies.forEach( function(enemy) {
+            var rowEnemy = Math.floor(enemy.y / ROW_HEIGHT);
+            var midlineEnemy = Math.floor(enemy.x + COLUMN_WIDTH/2);
+            if (rowPlayer == rowEnemy) {
+                if (Math.abs(midlinePlayer - midlineEnemy) < ALLOWED_OVERLAP) {
+                    collisionDetected = true;
+                }
+            }
+        } );
+        if (collisionDetected) {
+            this.x = PLAYER_START_X;
+            this.y = PLAYER_START_Y;
+            this.score = this.score + COLLIDE_POINTS;
+            console.log("Collision detected...score is now " + this.score);
+        }
+};
 
 // Update the player's position, required method for game
 // Parameter: dt, a time delta between ticks
